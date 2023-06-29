@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - DJANGO_SETTINGS_MODULE=your_project.settings.production
+    volumes:
+      - .:/code
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - web
+      - redis
+    environment:
+      - DJANGO_SETTINGS_MODULE=your_project.settings.production
+    volumes:
+      - .:/code
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      - POSTGRES_USER=your_postgres_user
+      - POSTGRES_PASSWORD=your_postgres_password
+      - POSTGRES_DB=your_postgres_db
+
+  redis:
+    image: redis:latest
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/static:/code/static
+    depends_on:
+      - web
